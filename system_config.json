@@ -1,0 +1,58 @@
+{
+  "devices": {
+    "radar": {
+      "enabled": true,
+      "type": "RadarDevice",
+      "communication": {
+        "protocol": "serial",
+        "port": "COM1",
+        "baudRate": 4800,
+        "maxRetries": 3,
+        "reconnectBaseDelayMs": 1000
+      }
+    },
+    "servo_azimuth": {
+      "enabled": true,
+      "type": "ServoDriverDevice",
+      "communication": {
+        "protocol": "modbus",
+        "port": "COM5",
+        "baudRate": 115200,
+        "parity": 0,
+        "timeoutMs": 1000,
+        "retries": 3,
+        "slaveId": 1,
+        "pollIntervalMs": 200
+      }
+    },
+    "servo_elevation": {
+      "enabled": true,
+      "type": "ServoDriverDevice",
+      "communication": {
+        "protocol": "modbus",
+        "port": "COM7",
+        "baudRate": 115200,
+        "parity": 0,
+        "timeoutMs": 1000,
+        "retries": 3,
+        "slaveId": 2,
+        "pollIntervalMs": 200
+      }
+    },
+    "lrf": {
+      "enabled": true,
+      "type": "LRFDevice",
+      "communication": {
+        "protocol": "serial",
+        "port": "COM3",
+        "baudRate": 115200,
+        "maxRetries": 3,
+        "reconnectBaseDelayMs": 1000
+      }
+    }
+  },
+  "system": {
+    "trackingUpdateIntervalMs": 100,
+    "logLevel": "debug"
+  }
+}
