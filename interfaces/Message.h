@@ -6,6 +6,8 @@ public:
     enum class Type {
         Generic,
         RadarPlotType,
+        Plc21DigitalInputsType,
+        Plc21AnalogInputsType,
         LrfDataType,
         LrfInfoType,
         ServoDataType,

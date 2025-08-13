@@ -77,8 +77,46 @@ struct LrfData {
     }
 };
 
+// PLC21 DATA STRUCTURE
+struct Plc21DeviceData {
+    bool isConnected       = false; ///< Device connection status.
+
+    // Digital Inputs
+    bool armGunSW          = false; ///< State of the gun arming switch.
+    bool loadAmmunitionSW  = false; ///< State of the ammunition loading switch.
+    bool enableStationSW   = false; ///< State of the station enable switch.
+    bool homePositionSW    = false; ///< State of the home position switch.
+    bool enableStabilizationSW = false; ///< State of the stabilization enable switch.
+    bool authorizeSw       = false; ///< State of the authorization switch.
+    bool switchCameraSW    = false; ///< State of the camera switch.
+    bool menuUpSW          = false; ///< State of the 'Menu Up' button.
+    bool menuDownSW        = false; ///< State of the 'Menu Down' button.
+    bool menuValSw         = false; ///< State of the 'Menu Validate' button.
+
+    // Analog Inputs (Holding Registers)
+    int  speedSW           = 2;     ///< Value of the speed switch.
+    int  fireMode          = 0;     ///< Current fire mode.
+    int  panelTemperature  = 0;     ///< Panel temperature.
+
+    bool operator!=(const Plc21DeviceData &other) const {
+        return (
+            isConnected       != other.isConnected ||
+            armGunSW          != other.armGunSW ||
+            loadAmmunitionSW  != other.loadAmmunitionSW ||
+            enableStationSW   != other.enableStationSW ||
+            homePositionSW    != other.homePositionSW ||
+            enableStabilizationSW != other.enableStabilizationSW ||
+            authorizeSw       != other.authorizeSw ||
+            switchCameraSW    != other.switchCameraSW ||
+            menuUpSW          != other.menuUpSW ||
+            menuDownSW        != other.menuDownSW ||
+            menuValSw         != other.menuValSw ||
+            speedSW           != other.speedSW ||
+            fireMode          != other.fireMode ||
+            panelTemperature  != other.panelTemperature
+        );
+    }
+};
 
 
 #endif // DATATYPES_H
-
-

@@ -25,6 +25,11 @@ LrfData SystemDataModel::getLrfData() const {
     return m_lrfData;
 }
 
+Plc21DeviceData SystemDataModel::getPlc21Data() const {
+    QReadLocker locker(&m_plc21Lock);
+    return m_plc21Data;
+}
+
 void SystemDataModel::onRadarDataUpdated(std::shared_ptr<const RadarDeviceData> radarData) {
     qDebug() << "SystemDataModel::onRadarDataUpdated called with" << radarData->trackedTargets.size() << "targets";
     if (!radarData) {
@@ -74,4 +79,14 @@ void SystemDataModel::onLrfDataUpdated(std::shared_ptr<const LrfData> lrfData) {
     }
     qDebug() << "SystemDataModel: Emitting lrfDataChangedForUI signal";
     emit lrfDataChangedForUI();
+}
+
+void SystemDataModel::onPlc21DataUpdated(const Plc21DeviceData& plc21Data) {
+    qDebug() << "SystemDataModel::onPlc21DataUpdated called";
+    {
+        QWriteLocker locker(&m_plc21Lock);
+        m_plc21Data = plc21Data;
+    }
+    qDebug() << "SystemDataModel: Emitting plc21DataChangedForUI signal";
+    emit plc21DataChangedForUI();
 }

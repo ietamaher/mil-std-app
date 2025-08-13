@@ -49,6 +49,20 @@
         "maxRetries": 3,
         "reconnectBaseDelayMs": 1000
       }
+    },
+    "plc21": {
+      "enabled": true,
+      "type": "Plc21Device",
+      "communication": {
+        "protocol": "modbus",
+        "port": "COM8",
+        "baudRate": 115200,
+        "parity": 0,
+        "timeoutMs": 1000,
+        "retries": 3,
+        "slaveId": 3,
+        "pollIntervalMs": 50
+      }
     }
   },
   "system": {

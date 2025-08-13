@@ -9,7 +9,7 @@ public:
     enum class DeviceState { Offline, Initializing, Online, Error };
     Q_ENUM(DeviceState)
 
-    enum class DeviceType { Unknown, Radar, ServoDriver, LRF, Camera, Inclinometer };
+    enum class DeviceType { Unknown, Radar, ServoDriver, LRF, Camera, Inclinometer, PLC };
     Q_ENUM(DeviceType)
 
     // Provide the function body (the definition) directly in the header.
