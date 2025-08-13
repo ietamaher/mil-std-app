@@ -75,19 +75,19 @@ void SystemController::createSingleDevice(const QString& deviceName, const QJson
 
     if (type == "RadarDevice") {
         auto radar = new RadarDevice();
-        radar->setDependencies(transport, parser);
+        radar->setDependencies(transport, qobject_cast<NmeaParser*>(parser));
         device = radar;
     } else if (type == "LRFDevice") {
         auto lrf = new LRFDevice();
-        lrf->setDependencies(transport, parser);
+        lrf->setDependencies(transport, qobject_cast<LrfProtocolParser*>(parser));
         device = lrf;
     } else if (type == "ServoDriverDevice") {
         auto servo = new ServoDriverDevice();
-        servo->setDependencies(transport, parser);
+        servo->setDependencies(transport, qobject_cast<ModbusProtocolParser*>(parser));
         device = servo;
     } else if (type == "Plc21Device") {
         auto plc = new Plc21Device();
-        plc->setDependencies(transport, parser);
+        plc->setDependencies(transport, qobject_cast<Plc21ProtocolParser*>(parser));
         device = plc;
     }
 
