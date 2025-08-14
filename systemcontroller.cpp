@@ -1,8 +1,8 @@
-#include "SystemController.h"
-#include "SystemDataModel.h"
+#include "systemcontroller.h"
+#include "systemdatamodel.h"
 #include "communication/modbustransport.h"
 #include "devices/radardevice.h"
-#include "communication/SerialPortTransport.h"
+#include "communication/serialporttransport.h"
 #include "protocols/nmeaparser.h"
 #include <QDebug>
 #include <QTimer>
@@ -13,6 +13,8 @@
 #include "protocols/modbusprotocolparser.h"
 #include "devices/plc21device.h"
 #include "protocols/plc21protocolparser.h"
+#include "devices/plc42device.h"
+#include "protocols/plc42protocolparser.h"
 
 SystemController::SystemController(QObject* parent)
     : QObject(parent), m_model(new SystemDataModel(this))
@@ -67,6 +69,8 @@ void SystemController::createSingleDevice(const QString& deviceName, const QJson
         parser = new ModbusProtocolParser();
     } else if (type == "Plc21Device") {
         parser = new Plc21ProtocolParser();
+    } else if (type == "PLC42Device") {
+        parser = new Plc42ProtocolParser();
     } else {
         qWarning() << "Unknown device type on IO thread:" << type;
         delete transport;
@@ -88,6 +92,10 @@ void SystemController::createSingleDevice(const QString& deviceName, const QJson
     } else if (type == "Plc21Device") {
         auto plc = new Plc21Device();
         plc->setDependencies(transport, qobject_cast<Plc21ProtocolParser*>(parser));
+        device = plc;
+    } else if (type == "PLC42Device") {
+        auto plc = new PLC42Device();
+        plc->setDependencies(static_cast<ModbusTransport*>(transport), static_cast<Plc42ProtocolParser*>(parser));
         device = plc;
     }
 
@@ -134,6 +142,8 @@ void SystemController::onDeviceCreated(IDevice* device, const QString& deviceNam
         }
     } else if (type == "Plc21Device") {
         m_plc21 = static_cast<Plc21Device*>(device);
+    } else if (type == "PLC42Device") {
+        m_plc42 = static_cast<PLC42Device*>(device);
     }
 
     m_devices.append(device);
@@ -145,7 +155,7 @@ void SystemController::onDeviceCreated(IDevice* device, const QString& deviceNam
 
 void SystemController::checkAndConnectSignals() {
     static bool signalsConnected = false;
-    if (!signalsConnected && m_devices.size() >= 4) { // Expect 4 devices now
+    if (!signalsConnected && m_devices.size() >= 5) { // Expect 5 devices now
         QTimer::singleShot(100, this, &SystemController::connectSignals);
         signalsConnected = true;
     }
@@ -168,6 +178,9 @@ void SystemController::connectSignals() {
     if (m_plc21) {
         connect(m_plc21, &Plc21Device::panelDataChanged, m_model, &SystemDataModel::onPlc21DataUpdated, Qt::QueuedConnection);
     }
+    if (m_plc42) {
+        connect(m_plc42, &PLC42Device::plc42DataChanged, m_model, &SystemDataModel::onPlc42DataUpdated, Qt::QueuedConnection);
+    }
     connect(m_trackingTimer, &QTimer::timeout, this, &SystemController::updateTracking);
     emit logMessage("All device signals connected successfully.", Qt::darkBlue);
     qDebug() << "=== END CONNECTING SIGNALS ===";
@@ -181,6 +194,8 @@ void SystemController::checkMetaTypes() {
     qRegisterMetaType<std::shared_ptr<const LrfData>>();
     qRegisterMetaType<Plc21DeviceData>();
     qRegisterMetaType<const Plc21DeviceData&>();
+    qRegisterMetaType<Plc42Data>();
+    qRegisterMetaType<const Plc42Data&>();
 }
 
 void SystemController::trackTarget(quint32 targetId) {

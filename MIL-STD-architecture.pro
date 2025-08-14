@@ -20,7 +20,9 @@ SOURCES += \
     devices/radardevice.cpp \
     communication/serialporttransport.cpp \
     systemcontroller.cpp \
-    systemdatamodel.cpp
+    systemdatamodel.cpp \
+    devices/plc42device.cpp \
+    protocols/plc42protocolparser.cpp
 
 HEADERS += \
     communication/modbustransport.h \
@@ -43,7 +45,10 @@ HEADERS += \
     communication/serialporttransport.h \
     protocols/radarplotmessage.h \
     systemcontroller.h \
-    systemdatamodel.h
+    systemdatamodel.h \
+    devices/plc42device.h \
+    protocols/Plc42Message.h \
+    protocols/plc42protocolparser.h
 
 FORMS += \
     mainwindow.ui

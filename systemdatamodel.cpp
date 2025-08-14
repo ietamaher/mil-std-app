@@ -90,3 +90,18 @@ void SystemDataModel::onPlc21DataUpdated(const Plc21DeviceData& plc21Data) {
     qDebug() << "SystemDataModel: Emitting plc21DataChangedForUI signal";
     emit plc21DataChangedForUI();
 }
+
+Plc42Data SystemDataModel::getPlc42Data() const {
+    QReadLocker locker(&m_plc42Lock);
+    return m_plc42Data;
+}
+
+void SystemDataModel::onPlc42DataUpdated(const Plc42Data& plc42Data) {
+    qDebug() << "SystemDataModel::onPlc42DataUpdated called";
+    {
+        QWriteLocker locker(&m_plc42Lock);
+        m_plc42Data = plc42Data;
+    }
+    qDebug() << "SystemDataModel: Emitting plc42DataChangedForUI signal";
+    emit plc42DataChangedForUI();
+}

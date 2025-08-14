@@ -118,5 +118,67 @@ struct Plc21DeviceData {
     }
 };
 
+// PLC42 DATA STRUCTURE
+struct Plc42Data {
+    bool isConnected             = false; ///< Device connection status.
+
+    // Discrete inputs
+    bool stationUpperSensor      = false; ///< State of the station upper sensor.
+    bool stationLowerSensor      = false; ///< State of the station lower sensor.
+    bool emergencyStopActive     = false; ///< State of the emergency stop.
+    bool ammunitionLevel         = false; ///< State of the ammunition level.
+    bool stationInput1           = false; ///< State of station input 1.
+    bool stationInput2           = false; ///< State of station input 2.
+    bool stationInput3           = false; ///< State of station input 3.
+    bool solenoidActive          = false; ///< State of solenoid activation.
+
+    // Holding registers
+    uint16_t solenoidMode        = 0;     ///< Solenoid mode.
+    uint16_t gimbalOpMode        = 0;     ///< Gimbal operating mode.
+    uint32_t azimuthSpeed        = 0;     ///< Azimuth speed (32-bit value).
+    uint32_t elevationSpeed      = 0;     ///< Elevation speed (32-bit value).
+    uint16_t azimuthDirection    = 0;     ///< Azimuth direction.
+    uint16_t elevationDirection  = 0;     ///< Elevation direction.
+    uint16_t solenoidState       = 0;     ///< Solenoid state.
+    uint16_t resetAlarm          = 0;     ///< Alarm reset command.
+
+    /**
+     * @brief Equality comparison operator for Plc42Data.
+     * @param other The other Plc42Data object to compare.
+     * @return True if all members are equal, false otherwise.
+     */
+    bool operator==(const Plc42Data &other) const {
+        return (
+            isConnected             == other.isConnected &&
+            stationUpperSensor      == other.stationUpperSensor &&
+            stationLowerSensor      == other.stationLowerSensor &&
+            emergencyStopActive     == other.emergencyStopActive &&
+            ammunitionLevel         == other.ammunitionLevel &&
+            stationInput1           == other.stationInput1 &&
+            stationInput2           == other.stationInput2 &&
+            stationInput3           == other.stationInput3 &&
+            solenoidActive          == other.solenoidActive &&
+            solenoidMode            == other.solenoidMode &&
+            gimbalOpMode            == other.gimbalOpMode &&
+            azimuthSpeed            == other.azimuthSpeed &&
+            elevationSpeed          == other.elevationSpeed &&
+            azimuthDirection        == other.azimuthDirection &&
+            elevationDirection      == other.elevationDirection &&
+            solenoidState           == other.solenoidState &&
+            resetAlarm              == other.resetAlarm
+            );
+    }
+
+    /**
+     * @brief Inequality comparison operator for Plc42Data.
+     * @param other The other Plc42Data object to compare.
+     * @return True if at least one member is different, false otherwise.
+     */
+    bool operator!=(const Plc42Data &other) const {
+        return !(*this == other);
+    }
+};
+
+Q_DECLARE_METATYPE(Plc42Data)
 
 #endif // DATATYPES_H

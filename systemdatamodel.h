@@ -2,9 +2,16 @@
 #include <QObject>
 #include <memory>
 #include "data/DataTypes.h"
+#include <QReadWriteLock>
 
 class SystemDataModel : public QObject {
     Q_OBJECT
+    Q_PROPERTY(ServoDriverData azServoData READ getAzimuthServoData NOTIFY azimuthServoStateUpdated)
+    Q_PROPERTY(ServoDriverData elServoData READ getElevationServoData NOTIFY elevationServoStateUpdated)
+    Q_PROPERTY(LrfData lrfData READ getLrfData NOTIFY lrfDataChangedForUI)
+    Q_PROPERTY(Plc21DeviceData plc21Data READ getPlc21Data NOTIFY plc21DataChangedForUI)
+    Q_PROPERTY(Plc42Data plc42Data READ getPlc42Data NOTIFY plc42DataChangedForUI)
+
 public:
     explicit SystemDataModel(QObject* parent = nullptr);
 
@@ -13,6 +20,7 @@ public:
     ServoDriverData getElevationServoData() const;
     LrfData getLrfData() const;
     Plc21DeviceData getPlc21Data() const;
+    Plc42Data getPlc42Data() const;
 
 public slots:
     // FIX: The slot's signature MUST match the signal's signature.
@@ -21,6 +29,7 @@ public slots:
     void onElevationServoDataUpdated(const ServoDriverData& servoData);
     void onLrfDataUpdated(std::shared_ptr<const LrfData> lrfData);
     void onPlc21DataUpdated(const Plc21DeviceData& plc21Data);
+    void onPlc42DataUpdated(const Plc42Data& plc42Data);
 
 signals:
     void targetsUpdated();
@@ -28,6 +37,7 @@ signals:
     void elevationServoStateUpdated();
     void lrfDataChangedForUI();
     void plc21DataChangedForUI();
+    void plc42DataChangedForUI();
 
 private:
     mutable QReadWriteLock m_radarLock;
@@ -44,4 +54,7 @@ private:
 
     mutable QReadWriteLock m_plc21Lock;
     Plc21DeviceData m_plc21Data;
+
+    mutable QReadWriteLock m_plc42Lock;
+    Plc42Data m_plc42Data;
 };

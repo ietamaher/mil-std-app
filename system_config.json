@@ -63,6 +63,20 @@
         "slaveId": 3,
         "pollIntervalMs": 50
       }
+    },
+    "plc42": {
+      "enabled": true,
+      "type": "PLC42Device",
+      "communication": {
+        "protocol": "modbus",
+        "port": "COM9",
+        "baudRate": 115200,
+        "parity": 0,
+        "timeoutMs": 1000,
+        "retries": 3,
+        "slaveId": 4,
+        "pollIntervalMs": 200
+      }
     }
   },
   "system": {

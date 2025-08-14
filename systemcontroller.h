@@ -10,6 +10,7 @@ class RadarDevice;
 class ServoDriverDevice;
 class LRFDevice;
 class Plc21Device;
+class PLC42Device;
 class QThread;
 
 class SystemController : public QObject {
@@ -58,6 +59,7 @@ private:
     ServoDriverDevice* m_servo_el = nullptr;
     LRFDevice* m_lrf = nullptr;
     Plc21Device* m_plc21 = nullptr;
+    PLC42Device* m_plc42 = nullptr;
 
     QTimer* m_trackingTimer = nullptr;
     quint32 m_trackedTargetId = 0;
