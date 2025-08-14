@@ -15,6 +15,7 @@
 #include "protocols/plc21protocolparser.h"
 #include "devices/plc42device.h"
 #include "protocols/plc42protocolparser.h"
+#include "devices/cameravideostreamdevice.h"
 
 SystemController::SystemController(QObject* parent)
     : QObject(parent), m_model(new SystemDataModel(this))
@@ -25,6 +26,8 @@ SystemController::SystemController(QObject* parent)
 }
 
 SystemController::~SystemController() {
+    if (m_dayProcessor) m_dayProcessor->stop();
+    if (m_nightProcessor) m_nightProcessor->stop();
     m_ioThread->quit();
     m_ioThread->wait();
 }
@@ -113,6 +116,30 @@ void SystemController::createSingleDevice(const QString& deviceName, const QJson
     emit deviceCreated(device, deviceName, type);
 }
 
+bool SystemController::createCameraDevices(const QJsonObject& cameraConfigs) {
+    if (cameraConfigs.contains("day_cam")) {
+        QJsonObject conf = cameraConfigs["day_cam"].toObject();
+        m_dayProcessor = new CameraVideoStreamDevice(0,
+                                                     conf["device"].toString(),
+                                                     conf["width"].toInt(),
+                                                     conf["height"].toInt(),
+                                                     static_cast<SystemStateModel*>(m_model)); // Cast needed
+        connect(m_dayProcessor, &CameraVideoStreamDevice::frameDataReady, m_model, &SystemDataModel::onFrameDataReady, Qt::QueuedConnection);
+        connect(m_model, &SystemDataModel::systemStateChanged, m_dayProcessor, &CameraVideoStreamDevice::onSystemStateChanged, Qt::QueuedConnection);
+    }
+    if (cameraConfigs.contains("night_cam")) {
+        QJsonObject conf = cameraConfigs["night_cam"].toObject();
+        m_nightProcessor = new CameraVideoStreamDevice(1,
+                                                       conf["device"].toString(),
+                                                       conf["width"].toInt(),
+                                                       conf["height"].toInt(),
+                                                       static_cast<SystemStateModel*>(m_model)); // Cast needed
+        connect(m_nightProcessor, &CameraVideoStreamDevice::frameDataReady, m_model, &SystemDataModel::onFrameDataReady, Qt::QueuedConnection);
+        connect(m_model, &SystemDataModel::systemStateChanged, m_nightProcessor, &CameraVideoStreamDevice::onSystemStateChanged, Qt::QueuedConnection);
+    }
+    return true;
+}
+
 bool SystemController::initialize(const QJsonObject& config) {
     qDebug() << "SystemController::initialize() starting on thread:" << QThread::currentThread();
     checkMetaTypes();
@@ -123,6 +150,14 @@ bool SystemController::initialize(const QJsonObject& config) {
         qCritical() << "Failed to queue device creation from configuration.";
         return false;
     }
+    if (!createCameraDevices(config["cameras"].toObject())) {
+        qCritical() << "Failed to create camera devices from configuration.";
+        return false;
+    }
+
+    if (m_dayProcessor) m_dayProcessor->start();
+    if (m_nightProcessor) m_nightProcessor->start();
+
     emit logMessage("System Initialized Successfully.", Qt::darkGreen);
     return true;
 }
@@ -196,6 +231,22 @@ void SystemController::checkMetaTypes() {
     qRegisterMetaType<const Plc21DeviceData&>();
     qRegisterMetaType<Plc42Data>();
     qRegisterMetaType<const Plc42Data&>();
+    qRegisterMetaType<FrameData>();
+    qRegisterMetaType<const FrameData&>();
+}
+
+void SystemController::setCameraTracking(int camIndex, bool enabled) {
+    CameraVideoStreamDevice* cam = (camIndex == 0) ? m_dayProcessor : m_nightProcessor;
+    if (cam) {
+        QMetaObject::invokeMethod(cam, "setTrackingEnabled", Qt::QueuedConnection, Q_ARG(bool, enabled));
+    }
+}
+
+void SystemController::setCameraDetection(int camIndex, bool enabled) {
+    CameraVideoStreamDevice* cam = (camIndex == 0) ? m_dayProcessor : m_nightProcessor;
+    if (cam) {
+        QMetaObject::invokeMethod(cam, "setDetectionEnabled", Qt::QueuedConnection, Q_ARG(bool, enabled));
+    }
 }
 
 void SystemController::trackTarget(quint32 targetId) {

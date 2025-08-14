@@ -22,7 +22,8 @@ SOURCES += \
     systemcontroller.cpp \
     systemdatamodel.cpp \
     devices/plc42device.cpp \
-    protocols/plc42protocolparser.cpp
+    protocols/plc42protocolparser.cpp \
+    devices/cameravideostreamdevice.cpp
 
 HEADERS += \
     communication/modbustransport.h \
@@ -48,7 +49,12 @@ HEADERS += \
     systemdatamodel.h \
     devices/plc42device.h \
     protocols/Plc42Message.h \
-    protocols/plc42protocolparser.h
+    protocols/plc42protocolparser.h \
+    devices/cameravideostreamdevice.h \
+    osd/osdrenderer.h \
+    utils/inference.h \
+    models/systemstatemodel.h \
+    vpi_helpers.h
 
 FORMS += \
     mainwindow.ui

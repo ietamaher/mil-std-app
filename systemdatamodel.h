@@ -3,6 +3,7 @@
 #include <memory>
 #include "data/DataTypes.h"
 #include <QReadWriteLock>
+#include <QMap>
 
 class SystemDataModel : public QObject {
     Q_OBJECT
@@ -21,15 +22,16 @@ public:
     LrfData getLrfData() const;
     Plc21DeviceData getPlc21Data() const;
     Plc42Data getPlc42Data() const;
+    FrameData getFrameData(int camIndex) const;
 
 public slots:
-    // FIX: The slot's signature MUST match the signal's signature.
     void onRadarDataUpdated(std::shared_ptr<const RadarDeviceData> radarData);
     void onAzimuthServoDataUpdated(const ServoDriverData& servoData);
     void onElevationServoDataUpdated(const ServoDriverData& servoData);
     void onLrfDataUpdated(std::shared_ptr<const LrfData> lrfData);
     void onPlc21DataUpdated(const Plc21DeviceData& plc21Data);
     void onPlc42DataUpdated(const Plc42Data& plc42Data);
+    void onFrameDataReady(const FrameData& data);
 
 signals:
     void targetsUpdated();
@@ -38,8 +40,12 @@ signals:
     void lrfDataChangedForUI();
     void plc21DataChangedForUI();
     void plc42DataChangedForUI();
+    void frameDataChanged(int camIndex);
+    void systemStateChanged(const SystemStateData& state);
 
 private:
+    void updateSystemState(); // Helper to aggregate and emit system state
+
     mutable QReadWriteLock m_radarLock;
     RadarDeviceData m_radarData;
 
@@ -57,4 +63,9 @@ private:
 
     mutable QReadWriteLock m_plc42Lock;
     Plc42Data m_plc42Data;
+
+    mutable QReadWriteLock m_frameLock;
+    QMap<int, FrameData> m_frames;
+
+    SystemStateData m_systemState;
 };

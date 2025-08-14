@@ -11,6 +11,7 @@ class ServoDriverDevice;
 class LRFDevice;
 class Plc21Device;
 class PLC42Device;
+class CameraVideoStreamDevice;
 class QThread;
 
 class SystemController : public QObject {
@@ -27,33 +28,32 @@ public slots:
     void stopTracking();
     void lrfGetSingleDistance();
     void lrfGetPulseCount();
+    void setCameraTracking(int camIndex, bool enabled);
+    void setCameraDetection(int camIndex, bool enabled);
 
 signals:
     void logMessage(const QString& message, QColor color = Qt::black);
-    // ADDED: New signal for device creation completion
     void deviceCreated(IDevice* device, const QString& deviceName, const QString& type);
 
 private slots:
     void updateTracking();
     void onDeviceStateChanged(IDevice::DeviceState state);
     void onDeviceError(const QString& message);
-    // ADDED: New slot to handle device registration
     void onDeviceCreated(IDevice* device, const QString& deviceName, const QString& type);
-
     void checkMetaTypes();
-    void testSignalEmission();
+
 private:
     bool createDevices(const QJsonObject& deviceConfigs);
-    // ADDED: New method to create a single device on IO thread
     void createSingleDevice(const QString& deviceName, const QJsonObject& devConf);
+    bool createCameraDevices(const QJsonObject& cameraConfigs);
     void connectSignals();
-    // ADDED: New method to check if all devices are ready
     void checkAndConnectSignals();
 
     SystemDataModel* m_model;
     QList<IDevice*> m_devices;
     QThread* m_ioThread;
 
+    // Standard Devices
     RadarDevice* m_radar = nullptr;
     ServoDriverDevice* m_servo_az = nullptr;
     ServoDriverDevice* m_servo_el = nullptr;
@@ -61,7 +61,10 @@ private:
     Plc21Device* m_plc21 = nullptr;
     PLC42Device* m_plc42 = nullptr;
 
+    // Camera Devices (managed separately as they are QThreads)
+    CameraVideoStreamDevice* m_dayProcessor = nullptr;
+    CameraVideoStreamDevice* m_nightProcessor = nullptr;
+
     QTimer* m_trackingTimer = nullptr;
     quint32 m_trackedTargetId = 0;
-    void debugDeviceConnections();
 };

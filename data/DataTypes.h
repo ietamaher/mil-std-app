@@ -3,6 +3,103 @@
 
 
 #include <QtCore>
+#include <QImage>
+#include <QRect>
+#include <QColor>
+#include <vector>
+#include "osd/osdrenderer.h"
+#include "utils/inference.h"
+#include <vpi/Types.h> // For VPITrackingState
+
+// --- Data Structure Definitions ---
+
+/**
+ * @brief Holds the processed frame data and associated metadata to be emitted.
+ */
+struct FrameData {
+    int cameraIndex = -1;
+    QImage baseImage;
+    bool trackingEnabled = false;
+    bool trackerInitialized = false;
+    VPITrackingState trackingState = VPI_TRACKING_STATE_LOST;
+    QRect trackingBbox = QRect(0, 0, 0, 0); // Use QRect for Qt integration
+    OperationalMode currentOpMode = OperationalMode::Idle;
+    MotionMode motionMode = MotionMode::Manual;
+    bool stabEnabled = false;
+    float azimuth = 0.0f;
+    float elevation = 0.0f;
+    float cameraFOV = 0.0f;
+    float speed = 0.0f;
+    float lrfDistance = 0.0f;
+    bool sysCharged = false;
+    bool sysArmed = false;
+    bool sysReady = false;
+    FireMode fireMode = FireMode::SingleShot;
+    ReticleType reticleType = ReticleType::BoxCrosshair;
+    QColor colorStyle = QColor(70, 226, 165);
+    std::vector<YoloDetection> detections;
+    bool detectionEnabled = false;
+    bool zeroingModeActive = false;
+    float zeroingAzimuthOffset = 0.0f;
+    float zeroingElevationOffset = 0.0f;
+    bool zeroingAppliedToBallistics = false;
+    bool windageModeActive = false;
+    float windageSpeedKnots = 0.0f;
+    bool windageAppliedToBallistics = false;
+    bool isReticleInNoFireZone = false;
+    bool gimbalStoppedAtNTZLimit = false;
+    bool leadAngleActive = false;
+    int reticleAimpointImageX_px;
+    int reticleAimpointImageY_px;
+    QString leadStatusText;
+    QString currentScanName = "";
+    TrackingPhase currentTrackingPhase = TrackingPhase::Off;
+    bool trackerHasValidTarget = false;
+    float acquisitionBoxX_px = 0.0f;
+    float acquisitionBoxY_px = 0.0f;
+    float acquisitionBoxW_px = 0.0f;
+    float acquisitionBoxH_px = 0.0f;
+};
+
+// Placeholder struct based on usage in CameraVideoStreamDevice::onSystemStateChanged
+struct SystemStateData {
+    OperationalMode opMode;
+    MotionMode motionMode;
+    bool enableStabilization;
+    float gimbalAz;
+    float gimbalEl;
+    float lrfDistance;
+    bool ammoLoaded;
+    bool gunArmed;
+    bool isReady() const { return ammoLoaded && gunArmed; }
+    bool activeCameraIsDay;
+    float dayCurrentHFOV;
+    float nightCurrentHFOV;
+    float gimbalSpeed;
+    FireMode fireMode;
+    ReticleType reticleType;
+    QColor colorStyle;
+    bool zeroingModeActive;
+    bool zeroingAppliedToBallistics;
+    float zeroingAzimuthOffset;
+    float zeroingElevationOffset;
+    bool windageModeActive;
+    bool windageAppliedToBallistics;
+    float windageSpeedKnots;
+    bool isReticleInNoFireZone;
+    bool isReticleInNoTraverseZone;
+    bool leadAngleCompensationActive;
+    int reticleAimpointImageX_px;
+    int reticleAimpointImageY_px;
+    QString leadStatusText;
+    QString currentScanName;
+    TrackingPhase currentTrackingPhase;
+    int acquisitionBoxX_px;
+    int acquisitionBoxY_px;
+    int acquisitionBoxW_px;
+    int acquisitionBoxH_px;
+};
+
 // Data from your original RadarDevice example
 struct RadarTargetData {
     quint32 id = 0;

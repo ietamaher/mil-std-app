@@ -82,5 +82,19 @@
   "system": {
     "trackingUpdateIntervalMs": 100,
     "logLevel": "debug"
+  },
+  "cameras": {
+    "day_cam": {
+        "type": "CameraVideoStreamDevice",
+        "device": "/dev/video0",
+        "width": 1280, "height": 720,
+        "transport": "none"
+    },
+    "night_cam": {
+        "type": "CameraVideoStreamDevice",
+        "device": "/dev/video2",
+        "width": 1280, "height": 720,
+        "transport": "none"
+    }
   }
 }
