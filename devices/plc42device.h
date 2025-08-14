@@ -3,6 +3,7 @@
 #include "devices/TemplatedDevice.h"
 #include "data/DataTypes.h"
 #include <QTimer>
+#include <QModbusDataUnit>
 
 class ModbusTransport;
 class Plc42ProtocolParser;
