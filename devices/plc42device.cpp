@@ -113,44 +113,42 @@ void PLC42Device::onReadReplyFinished() {
 }
 
 void PLC42Device::processMessage(const Message& message) {
-    if (message.typeId() == Message::Type::Plc42DataType) {
-        const auto* plcMsg = static_cast<const Plc42DataMessage*>(&message);
+    bool dataChanged = false;
 
-        // This is where we need to know the type of data.
-        // The message doesn't contain it. Let's pass it from onReadReplyFinished.
-        // This requires changing the signature of processMessage.
-        // Let's avoid that and use the heuristic in mergeAndProcessData.
-        mergeAndProcessData(plcMsg->data());
-    }
-}
-
-void PLC42Device::mergeAndProcessData(const Plc42Data& partialData) {
-    // This heuristic is not ideal, but it works given that the parser
-    // creates a default Plc42Data object and only fills in one part of it.
-    // A more robust solution would involve a more intelligent parser or message type.
-    if (partialData.solenoidMode != 0 || partialData.gimbalOpMode != 0 || partialData.azimuthSpeed != 0 || partialData.elevationSpeed != 0) {
-        // This is likely a holding register update
-        m_stagingData.solenoidMode = partialData.solenoidMode;
-        m_stagingData.gimbalOpMode = partialData.gimbalOpMode;
-        m_stagingData.azimuthSpeed = partialData.azimuthSpeed;
-        m_stagingData.elevationSpeed = partialData.elevationSpeed;
-        m_stagingData.azimuthDirection = partialData.azimuthDirection;
-        m_stagingData.elevationDirection = partialData.elevationDirection;
-        m_stagingData.solenoidState = partialData.solenoidState;
-        m_stagingData.resetAlarm = partialData.resetAlarm;
-    } else {
-        // This is likely a discrete input update
-        m_stagingData.stationUpperSensor = partialData.stationUpperSensor;
-        m_stagingData.stationLowerSensor = partialData.stationLowerSensor;
-        m_stagingData.emergencyStopActive = partialData.emergencyStopActive;
-        m_stagingData.ammunitionLevel = partialData.ammunitionLevel;
-        m_stagingData.stationInput1 = partialData.stationInput1;
-        m_stagingData.stationInput2 = partialData.stationInput2;
-        m_stagingData.stationInput3 = partialData.stationInput3;
-        m_stagingData.solenoidActive = partialData.solenoidActive;
+    switch(message.typeId()) {
+        case Message::Type::Plc42DiscreteInputsType: {
+            const auto* msg = static_cast<const Plc42DiscreteInputsMessage*>(&message);
+            const Plc42Data& partial = msg->data();
+            m_stagingData.stationUpperSensor = partial.stationUpperSensor;
+            m_stagingData.stationLowerSensor = partial.stationLowerSensor;
+            m_stagingData.emergencyStopActive = partial.emergencyStopActive;
+            m_stagingData.ammunitionLevel = partial.ammunitionLevel;
+            m_stagingData.stationInput1 = partial.stationInput1;
+            m_stagingData.stationInput2 = partial.stationInput2;
+            m_stagingData.stationInput3 = partial.stationInput3;
+            m_stagingData.solenoidActive = partial.solenoidActive;
+            dataChanged = true; // Assume any update is a change for simplicity here
+            break;
+        }
+        case Message::Type::Plc42HoldingRegistersType: {
+            const auto* msg = static_cast<const Plc42HoldingRegistersMessage*>(&message);
+            const Plc42Data& partial = msg->data();
+            m_stagingData.solenoidMode = partial.solenoidMode;
+            m_stagingData.gimbalOpMode = partial.gimbalOpMode;
+            m_stagingData.azimuthSpeed = partial.azimuthSpeed;
+            m_stagingData.elevationSpeed = partial.elevationSpeed;
+            m_stagingData.azimuthDirection = partial.azimuthDirection;
+            m_stagingData.elevationDirection = partial.elevationDirection;
+            m_stagingData.solenoidState = partial.solenoidState;
+            m_stagingData.resetAlarm = partial.resetAlarm;
+            dataChanged = true; // Assume any update is a change
+            break;
+        }
+        default:
+            return; // Not for us
     }
 
-    if (m_pendingReads == 0) {
+    if (dataChanged && m_pendingReads == 0) {
         m_stagingData.isConnected = (state() == DeviceState::Online);
         if (*data() != m_stagingData) {
             updateData(std::make_shared<const Plc42Data>(m_stagingData));

@@ -7,6 +7,20 @@ ModbusProtocolParser::ModbusProtocolParser(QObject* parent) : ProtocolParser(par
     initializeAlarmMap();
 }
 
+std::vector<MessagePtr> ModbusProtocolParser::parse(const QByteArray& /*rawData*/) {
+    return {};
+}
+
+QModbusDataUnit ModbusProtocolParser::createWritePositionRequest(float position) {
+    QModbusDataUnit writeUnit(QModbusDataUnit::HoldingRegisters, ServoRegisters::POSITION_START_ADDR, 2);
+    int32_t positionRaw = static_cast<int32_t>(position);
+    quint16 highWord = (positionRaw >> 16) & 0xFFFF;
+    quint16 lowWord = positionRaw & 0xFFFF;
+    writeUnit.setValue(0, highWord);
+    writeUnit.setValue(1, lowWord);
+    return writeUnit;
+}
+
 std::vector<MessagePtr> ModbusProtocolParser::parse(QModbusReply* reply) {
     std::vector<MessagePtr> messages;
     if (!reply || reply->error() != QModbusDevice::NoError) {

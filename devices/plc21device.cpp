@@ -5,18 +5,20 @@
 #include <QJsonObject>
 #include <QDebug>
 #include <QModbusDataUnit>
+#include <QModbusReply>
 
 Plc21Device::Plc21Device(QObject* parent)
     : TemplatedDevice<Plc21DeviceData>(parent),
     m_transport(nullptr),
     m_parser(nullptr),
-    m_pollTimer(new QTimer(this))
+    m_pollTimer(new QTimer(this)),
+    m_pendingReads(0)
 {
     connect(m_pollTimer, &QTimer::timeout, this, &Plc21Device::pollTimerTimeout);
 }
 
 Plc21Device::~Plc21Device() {
-    m_pollTimer->stop();
+    shutdown();
 }
 
 IDevice::DeviceType Plc21Device::type() const {
@@ -28,10 +30,6 @@ void Plc21Device::setDependencies(Transport* transport, ProtocolParser* parser) 
     m_parser = parser;
     m_transport->setParent(this);
     m_parser->setParent(this);
-
-    auto modbusTransport = static_cast<ModbusTransport*>(m_transport);
-    connect(modbusTransport, &ModbusTransport::modbusReplyReady,
-            this, &Plc21Device::onModbusReplyReady);
 }
 
 bool Plc21Device::initialize() {
@@ -69,48 +67,45 @@ void Plc21Device::shutdown() {
 }
 
 void Plc21Device::pollTimerTimeout() {
-    sendReadRequest(QModbusDataUnit::DiscreteInputs,
-                    Plc21Registers::DIGITAL_INPUTS_START_ADDRESS,
-                    Plc21Registers::DIGITAL_INPUTS_COUNT);
-
-    sendReadRequest(QModbusDataUnit::HoldingRegisters,
-                    Plc21Registers::ANALOG_INPUTS_START_ADDRESS,
-                    Plc21Registers::ANALOG_INPUTS_COUNT);
+    if (m_pendingReads > 0) {
+        qWarning() << objectName() << "Skipping poll cycle, previous reads still pending.";
+        return;
+    }
+    m_pendingReads = 2;
+    sendReadRequest(QModbusDataUnit::DiscreteInputs, Plc21Registers::DIGITAL_INPUTS_START_ADDRESS, Plc21Registers::DIGITAL_INPUTS_COUNT);
+    sendReadRequest(QModbusDataUnit::HoldingRegisters, Plc21Registers::ANALOG_INPUTS_START_ADDRESS, Plc21Registers::ANALOG_INPUTS_COUNT);
 }
 
 void Plc21Device::sendReadRequest(int registerType, int startAddress, int count) {
-    if (state() != DeviceState::Online || !m_transport) return;
-
+    if (state() != DeviceState::Online || !m_transport) {
+        m_pendingReads--;
+        return;
+    }
     auto transport = static_cast<ModbusTransport*>(m_transport);
     QModbusDataUnit readUnit(static_cast<QModbusDataUnit::RegisterType>(registerType), startAddress, count);
 
     if (auto* reply = transport->sendReadRequest(readUnit)) {
-        qDebug() << objectName() << "sent read request for reg type" << registerType << "addr" << startAddress;
+        connect(reply, &QModbusReply::finished, this, &Plc21Device::onReadReplyFinished);
     } else {
+        m_pendingReads--;
         qWarning() << objectName() << "failed to send read request for reg type" << registerType << "addr" << startAddress;
     }
 }
 
-void Plc21Device::onModbusReplyReady(QModbusReply* reply) {
-    if (!m_parser || !reply) {
-        qWarning() << objectName() << "onModbusReplyReady: missing parser or reply";
-        if(reply) reply->deleteLater();
-        return;
-    }
+void Plc21Device::onReadReplyFinished() {
+    m_pendingReads--;
+    auto* reply = qobject_cast<QModbusReply*>(sender());
+    if (!reply) return;
 
     if (reply->error() != QModbusDevice::NoError) {
-        reply->deleteLater();
-        return;
-    }
-
-    auto messages = m_parser->parse(reply);
-    reply->deleteLater();
-
-    for (const auto& msg : messages) {
-        if (msg) {
-            processMessage(*msg);
+        qWarning() << objectName() << "Modbus reply error:" << reply->errorString();
+    } else {
+        auto messages = m_parser->parse(reply);
+        for (const auto& msg : messages) {
+            if (msg) processMessage(*msg);
         }
     }
+    reply->deleteLater();
 }
 
 void Plc21Device::processMessage(const Message& message) {
@@ -123,7 +118,6 @@ void Plc21Device::processMessage(const Message& message) {
         case Message::Type::Plc21DigitalInputsType: {
             auto const* msg = static_cast<const Plc21DigitalInputsMessage*>(&message);
             const Plc21DeviceData& partial = msg->data();
-
             if (newData->armGunSW != partial.armGunSW) { newData->armGunSW = partial.armGunSW; dataChanged = true; }
             if (newData->loadAmmunitionSW != partial.loadAmmunitionSW) { newData->loadAmmunitionSW = partial.loadAmmunitionSW; dataChanged = true; }
             if (newData->enableStationSW != partial.enableStationSW) { newData->enableStationSW = partial.enableStationSW; dataChanged = true; }
@@ -139,14 +133,13 @@ void Plc21Device::processMessage(const Message& message) {
         case Message::Type::Plc21AnalogInputsType: {
             auto const* msg = static_cast<const Plc21AnalogInputsMessage*>(&message);
             const Plc21DeviceData& partial = msg->data();
-
             if (newData->speedSW != partial.speedSW) { newData->speedSW = partial.speedSW; dataChanged = true; }
             if (newData->fireMode != partial.fireMode) { newData->fireMode = partial.fireMode; dataChanged = true; }
             if (newData->panelTemperature != partial.panelTemperature) { newData->panelTemperature = partial.panelTemperature; dataChanged = true; }
             break;
         }
         default:
-            return; // Not a message for us
+            return;
     }
 
     if (dataChanged || newData->isConnected != currentData->isConnected) {
@@ -160,24 +153,28 @@ void Plc21Device::writeOutputs(const QVector<bool>& outputs) {
         qWarning() << objectName() << "cannot write outputs - device not online or transport missing";
         return;
     }
+    auto* plcParser = static_cast<Plc21ProtocolParser*>(m_parser);
+    QModbusDataUnit writeUnit = plcParser->createWriteOutputsRequest(outputs);
+    sendWriteRequest(writeUnit);
+}
 
+void Plc21Device::sendWriteRequest(const QModbusDataUnit& writeUnit) {
     auto transport = static_cast<ModbusTransport*>(m_transport);
-
-    QModbusDataUnit writeUnit(QModbusDataUnit::Coils, 0, outputs.size());
-    for(int i = 0; i < outputs.size(); ++i) {
-        writeUnit.setValue(i, outputs.at(i));
-    }
-
     if (auto* reply = transport->sendWriteRequest(writeUnit)) {
-        connect(reply, &QModbusReply::finished, this, [this, reply](){
-            if (reply->error() != QModbusDevice::NoError) {
-                qWarning() << objectName() << "Write outputs error:" << reply->errorString();
-            } else {
-                qDebug() << objectName() << "Successfully wrote outputs.";
-            }
-            reply->deleteLater();
-        });
+        connect(reply, &QModbusReply::finished, this, &Plc21Device::onWriteReplyFinished);
     } else {
         qWarning() << objectName() << "Failed to create write outputs request";
     }
+}
+
+void Plc21Device::onWriteReplyFinished() {
+    auto* reply = qobject_cast<QModbusReply*>(sender());
+    if (!reply) return;
+
+    if (reply->error() != QModbusDevice::NoError) {
+        qWarning() << objectName() << "Write outputs error:" << reply->errorString();
+    } else {
+        qDebug() << objectName() << "Successfully wrote outputs.";
+    }
+    reply->deleteLater();
 }

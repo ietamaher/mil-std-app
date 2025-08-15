@@ -43,6 +43,7 @@ MessagePtr Plc42ProtocolParser::parseReply(const QModbusDataUnit& unit) {
             data.stationInput2       = unit.value(5);
             data.stationInput3       = unit.value(6);
             data.solenoidActive      = unit.value(7);
+            return std::make_unique<Plc42DiscreteInputsMessage>(data);
         } else {
             qWarning() << "PLC42: Not enough digital input values in reply.";
             return nullptr;
@@ -66,13 +67,14 @@ MessagePtr Plc42ProtocolParser::parseReply(const QModbusDataUnit& unit) {
             data.elevationDirection = unit.value(7);
             data.solenoidState      = unit.value(8);
             data.resetAlarm         = unit.value(9);
+            return std::make_unique<Plc42HoldingRegistersMessage>(data);
         } else {
             qWarning() << "PLC42: Not enough holding register values in reply.";
             return nullptr;
         }
     }
 
-    return std::make_unique<Plc42DataMessage>(data);
+    return nullptr;
 }
 
 QModbusDataUnit Plc42ProtocolParser::createReadDigitalInputsRequest() const {

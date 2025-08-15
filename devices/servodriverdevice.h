@@ -6,6 +6,7 @@
 
 class Transport;
 class ProtocolParser; // Use forward declaration
+class QModbusDataUnit;
 class QModbusReply;
 class Message;
 
@@ -31,20 +32,17 @@ signals:
     void alarmDetected(uint16_t alarmCode, const QString& description);
 
 private slots:
-    // Slot to receive replies from the transport
-    void onModbusReplyReady(QModbusReply* reply);
-
-    // Slot for periodic polling
+    void onReadReplyFinished();
+    void onWriteReplyFinished();
     void pollTimerTimeout();
-
-    // Process messages from the parser
     void processMessage(const Message& message);
 
 private:
     void sendReadRequest(int startAddress, int count);
+    void sendWriteRequest(const QModbusDataUnit& writeUnit);
 
     Transport* m_transport;
     ProtocolParser* m_parser;
     QTimer* m_pollTimer;
-    int m_slaveId = 1; // Default, should be loaded from config
+    int m_pendingReads = 0;
 };

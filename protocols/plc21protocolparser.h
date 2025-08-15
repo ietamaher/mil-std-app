@@ -1,6 +1,8 @@
 #pragma once
 #include "interfaces/ProtocolParser.h"
 #include <QModbusReply>
+#include <QModbusDataUnit>
+#include <QVector>
 
 namespace Plc21Registers {
     constexpr int DIGITAL_INPUTS_START_ADDRESS = 0;
@@ -17,6 +19,8 @@ public:
 
     std::vector<MessagePtr> parse(const QByteArray& /*rawData*/) override { return {}; }
     std::vector<MessagePtr> parse(QModbusReply* reply) override;
+
+    QModbusDataUnit createWriteOutputsRequest(const QVector<bool>& outputs);
 
 private:
     MessagePtr parseDigitalInputs(const QModbusDataUnit& unit);

@@ -12,7 +12,8 @@ public:
         LrfInfoType,
         ServoDataType,
         ServoAlarmType,
-        Plc42DataType
+        Plc42DiscreteInputsType,
+        Plc42HoldingRegistersType
         // add others as needed
     };
     virtual ~Message() = default;

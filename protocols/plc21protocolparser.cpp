@@ -6,6 +6,14 @@
 
 Plc21ProtocolParser::Plc21ProtocolParser(QObject* parent) : ProtocolParser(parent) {}
 
+QModbusDataUnit Plc21ProtocolParser::createWriteOutputsRequest(const QVector<bool>& outputs) {
+    QModbusDataUnit writeUnit(QModbusDataUnit::Coils, 0, outputs.size());
+    for(int i = 0; i < outputs.size(); ++i) {
+        writeUnit.setValue(i, outputs.at(i));
+    }
+    return writeUnit;
+}
+
 std::vector<MessagePtr> Plc21ProtocolParser::parse(QModbusReply* reply) {
     std::vector<MessagePtr> messages;
     if (!reply || reply->error() != QModbusDevice::NoError) {

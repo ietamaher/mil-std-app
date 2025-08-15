@@ -28,14 +28,17 @@ signals:
     void panelDataChanged(const Plc21DeviceData& data);
 
 private slots:
-    void onModbusReplyReady(QModbusReply* reply);
+    void onReadReplyFinished();
+    void onWriteReplyFinished();
     void pollTimerTimeout();
     void processMessage(const Message& message);
 
 private:
     void sendReadRequest(int registerType, int startAddress, int count);
+    void sendWriteRequest(const QModbusDataUnit& writeUnit);
 
     Transport* m_transport;
     ProtocolParser* m_parser;
     QTimer* m_pollTimer;
+    int m_pendingReads = 0;
 };

@@ -3,6 +3,7 @@
 #include "interfaces/ProtocolParser.h"
 #include <QModbusReply>
 #include <QMap>
+#include <QModbusDataUnit>
 
 // Define register addresses here for clarity
 namespace ServoRegisters {
@@ -25,6 +26,9 @@ public:
 
     // This is the primary method for this parser
     std::vector<MessagePtr> parse(QModbusReply* reply) override;
+
+    // Method to create write requests
+    QModbusDataUnit createWritePositionRequest(float position);
 
 private:
     // Helper methods to create specific messages from a reply
