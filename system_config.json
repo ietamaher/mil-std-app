@@ -95,6 +95,18 @@
         "device": "/dev/video2",
         "width": 1280, "height": 720,
         "transport": "none"
+    },
+    "gyro": {
+      "enabled": true,
+      "type": "GyroDevice",
+      "communication": {
+        "protocol": "modbus",
+        "port": "COM10",
+        "baudRate": 115200,
+        "parity": "none",
+        "slaveId": 1,
+        "pollIntervalMs": 100
+      }
     }
   }
 }

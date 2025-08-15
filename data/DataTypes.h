@@ -278,4 +278,43 @@ struct Plc42Data {
 
 Q_DECLARE_METATYPE(Plc42Data)
 
+struct GyroData {
+    // Connection Status
+    bool isConnected = false;
+
+    // Processed Data (from Kalman Filter)
+    double imuRollDeg = 0.0;        ///< Processed Roll angle in degrees (from X-Axis).
+    double imuPitchDeg = 0.0;       ///< Processed Pitch angle in degrees (from Y-Axis).
+    double imuYawDeg = 0.0;         ///< Processed relative Yaw angle in degrees (from Z-Axis Gyro).
+    double temperature = 0.0; ///< Sensor temperature in degrees Celsius.
+
+    // Raw Sensor Data
+    int32_t rawAccelX = 0;    ///< Raw X-axis accelerometer value.
+    int32_t rawAccelY = 0;    ///< Raw Y-axis accelerometer value.
+    int32_t rawAccelZ = 0;    ///< Raw Z-axis accelerometer value.
+    int32_t rawGyroX = 0;     ///< Raw X-axis gyroscope value.
+    int32_t rawGyroY = 0;     ///< Raw Y-axis gyroscope value.
+    int32_t rawGyroZ = 0;     ///< Raw Z-axis gyroscope value.
+
+    // Comparison operators to easily detect changes.
+    bool operator==(const GyroData &other) const {
+        return (isConnected == other.isConnected &&
+                imuRollDeg == other.imuRollDeg &&
+                imuPitchDeg == other.imuPitchDeg &&
+                imuYawDeg == other.imuYawDeg &&
+                temperature == other.temperature &&
+                rawAccelX == other.rawAccelX &&
+                rawAccelY == other.rawAccelY &&
+                rawAccelZ == other.rawAccelZ &&
+                rawGyroX == other.rawGyroX &&
+                rawGyroY == other.rawGyroY &&
+                rawGyroZ == other.rawGyroZ);
+    }
+
+    bool operator!=(const GyroData &other) const {
+        return !(*this == other);
+    }
+};
+Q_DECLARE_METATYPE(GyroData)
+
 #endif // DATATYPES_H

@@ -23,7 +23,9 @@ SOURCES += \
     systemdatamodel.cpp \
     devices/plc42device.cpp \
     protocols/plc42protocolparser.cpp \
-    devices/cameravideostreamdevice.cpp
+    devices/cameravideostreamdevice.cpp \
+    devices/gyrodevice.cpp \
+    protocols/gyroprotocolparser.cpp
 
 HEADERS += \
     communication/modbustransport.h \
@@ -54,7 +56,10 @@ HEADERS += \
     osd/osdrenderer.h \
     utils/inference.h \
     models/systemstatemodel.h \
-    vpi_helpers.h
+    vpi_helpers.h \
+    devices/gyrodevice.h \
+    protocols/GyroMessage.h \
+    protocols/gyroprotocolparser.h
 
 FORMS += \
     mainwindow.ui

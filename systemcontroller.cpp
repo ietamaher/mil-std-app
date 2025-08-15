@@ -16,6 +16,8 @@
 #include "devices/plc42device.h"
 #include "protocols/plc42protocolparser.h"
 #include "devices/cameravideostreamdevice.h"
+#include "devices/gyrodevice.h"
+#include "protocols/gyroprotocolparser.h"
 
 SystemController::SystemController(QObject* parent)
     : QObject(parent), m_model(new SystemDataModel(this))
@@ -74,6 +76,8 @@ void SystemController::createSingleDevice(const QString& deviceName, const QJson
         parser = new Plc21ProtocolParser();
     } else if (type == "PLC42Device") {
         parser = new Plc42ProtocolParser();
+    } else if (type == "GyroDevice") {
+        parser = new GyroProtocolParser();
     } else {
         qWarning() << "Unknown device type on IO thread:" << type;
         delete transport;
@@ -100,6 +104,10 @@ void SystemController::createSingleDevice(const QString& deviceName, const QJson
         auto plc = new PLC42Device();
         plc->setDependencies(static_cast<ModbusTransport*>(transport), static_cast<Plc42ProtocolParser*>(parser));
         device = plc;
+    } else if (type == "GyroDevice") {
+        auto gyro = new GyroDevice();
+        gyro->setDependencies(static_cast<ModbusTransport*>(transport), static_cast<GyroProtocolParser*>(parser));
+        device = gyro;
     }
 
     if (!device) {
@@ -179,6 +187,8 @@ void SystemController::onDeviceCreated(IDevice* device, const QString& deviceNam
         m_plc21 = static_cast<Plc21Device*>(device);
     } else if (type == "PLC42Device") {
         m_plc42 = static_cast<PLC42Device*>(device);
+    } else if (type == "GyroDevice") {
+        m_gyro = static_cast<GyroDevice*>(device);
     }
 
     m_devices.append(device);
@@ -190,7 +200,7 @@ void SystemController::onDeviceCreated(IDevice* device, const QString& deviceNam
 
 void SystemController::checkAndConnectSignals() {
     static bool signalsConnected = false;
-    if (!signalsConnected && m_devices.size() >= 5) { // Expect 5 devices now
+    if (!signalsConnected && m_devices.size() >= 6) { // Expect 6 devices now
         QTimer::singleShot(100, this, &SystemController::connectSignals);
         signalsConnected = true;
     }
@@ -216,6 +226,9 @@ void SystemController::connectSignals() {
     if (m_plc42) {
         connect(m_plc42, &PLC42Device::plc42DataChanged, m_model, &SystemDataModel::onPlc42DataUpdated, Qt::QueuedConnection);
     }
+    if (m_gyro) {
+        connect(m_gyro, &GyroDevice::gyroDataChanged, m_model, &SystemDataModel::onGyroDataUpdated, Qt::QueuedConnection);
+    }
     connect(m_trackingTimer, &QTimer::timeout, this, &SystemController::updateTracking);
     emit logMessage("All device signals connected successfully.", Qt::darkBlue);
     qDebug() << "=== END CONNECTING SIGNALS ===";
@@ -233,6 +246,8 @@ void SystemController::checkMetaTypes() {
     qRegisterMetaType<const Plc42Data&>();
     qRegisterMetaType<FrameData>();
     qRegisterMetaType<const FrameData&>();
+    qRegisterMetaType<GyroData>();
+    qRegisterMetaType<const GyroData&>();
 }
 
 void SystemController::setCameraTracking(int camIndex, bool enabled) {

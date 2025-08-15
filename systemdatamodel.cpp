@@ -35,6 +35,11 @@ Plc42Data SystemDataModel::getPlc42Data() const {
     return m_plc42Data;
 }
 
+GyroData SystemDataModel::getGyroData() const {
+    QReadLocker locker(&m_gyroLock);
+    return m_gyroData;
+}
+
 FrameData SystemDataModel::getFrameData(int camIndex) const {
     QReadLocker locker(&m_frameLock);
     return m_frames.value(camIndex, FrameData()); // Return default if not found
@@ -102,6 +107,15 @@ void SystemDataModel::onPlc42DataUpdated(const Plc42Data& plc42Data) {
     updateSystemState();
 }
 
+void SystemDataModel::onGyroDataUpdated(const GyroData &data) {
+    {
+        QWriteLocker locker(&m_gyroLock);
+        m_gyroData = data;
+    }
+    emit gyroDataChangedForUI();
+    updateSystemState();
+}
+
 void SystemDataModel::onFrameDataReady(const FrameData &data) {
     {
         QWriteLocker locker(&m_frameLock);
@@ -118,6 +132,7 @@ void SystemDataModel::updateSystemState() {
     QWriteLocker elLocker(&m_elServoLock);
     QWriteLocker lrfLocker(&m_lrfLock);
     QWriteLocker plc42Locker(&m_plc42Lock);
+    QWriteLocker gyroLocker(&m_gyroLock);
 
     // Note: This is a simplified aggregation. A real implementation would be more complex.
     m_systemState.gimbalAz = m_azServoData.position;
@@ -125,6 +140,7 @@ void SystemDataModel::updateSystemState() {
     m_systemState.lrfDistance = m_lrfData.lastDistance;
     m_systemState.gunArmed = m_plc42Data.solenoidActive; // Example mapping
     m_systemState.ammoLoaded = m_plc42Data.ammunitionLevel; // Example mapping
+    m_systemState.enableStabilization = m_gyroData.isConnected; // Example mapping
 
     // Emit the aggregated state
     emit systemStateChanged(m_systemState);

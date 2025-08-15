@@ -13,7 +13,8 @@ public:
         ServoDataType,
         ServoAlarmType,
         Plc42DiscreteInputsType,
-        Plc42HoldingRegistersType
+        Plc42HoldingRegistersType,
+        GyroDataType
         // add others as needed
     };
     virtual ~Message() = default;

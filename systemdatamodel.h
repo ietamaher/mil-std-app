@@ -12,6 +12,7 @@ class SystemDataModel : public QObject {
     Q_PROPERTY(LrfData lrfData READ getLrfData NOTIFY lrfDataChangedForUI)
     Q_PROPERTY(Plc21DeviceData plc21Data READ getPlc21Data NOTIFY plc21DataChangedForUI)
     Q_PROPERTY(Plc42Data plc42Data READ getPlc42Data NOTIFY plc42DataChangedForUI)
+    Q_PROPERTY(GyroData gyroData READ getGyroData NOTIFY gyroDataChangedForUI)
 
 public:
     explicit SystemDataModel(QObject* parent = nullptr);
@@ -23,6 +24,7 @@ public:
     Plc21DeviceData getPlc21Data() const;
     Plc42Data getPlc42Data() const;
     FrameData getFrameData(int camIndex) const;
+    GyroData getGyroData() const;
 
 public slots:
     void onRadarDataUpdated(std::shared_ptr<const RadarDeviceData> radarData);
@@ -32,6 +34,7 @@ public slots:
     void onPlc21DataUpdated(const Plc21DeviceData& plc21Data);
     void onPlc42DataUpdated(const Plc42Data& plc42Data);
     void onFrameDataReady(const FrameData& data);
+    void onGyroDataUpdated(const GyroData& data);
 
 signals:
     void targetsUpdated();
@@ -40,6 +43,7 @@ signals:
     void lrfDataChangedForUI();
     void plc21DataChangedForUI();
     void plc42DataChangedForUI();
+    void gyroDataChangedForUI();
     void frameDataChanged(int camIndex);
     void systemStateChanged(const SystemStateData& state);
 
@@ -63,6 +67,9 @@ private:
 
     mutable QReadWriteLock m_plc42Lock;
     Plc42Data m_plc42Data;
+
+    mutable QReadWriteLock m_gyroLock;
+    GyroData m_gyroData;
 
     mutable QReadWriteLock m_frameLock;
     QMap<int, FrameData> m_frames;

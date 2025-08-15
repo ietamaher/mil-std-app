@@ -12,6 +12,7 @@ class LRFDevice;
 class Plc21Device;
 class PLC42Device;
 class CameraVideoStreamDevice;
+class GyroDevice;
 class QThread;
 
 class SystemController : public QObject {
@@ -64,6 +65,7 @@ private:
     // Camera Devices (managed separately as they are QThreads)
     CameraVideoStreamDevice* m_dayProcessor = nullptr;
     CameraVideoStreamDevice* m_nightProcessor = nullptr;
+    GyroDevice* m_gyro = nullptr;
 
     QTimer* m_trackingTimer = nullptr;
     quint32 m_trackedTargetId = 0;
